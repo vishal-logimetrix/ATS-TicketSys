@@ -11,9 +11,6 @@ import TicketDetailsModal from './Pages/TicketDetails';
 import TicketHistory from './Pages/TicketHistory';
 import { useEffect, useState } from 'react';
 
-
-
-
 const App = () => {
   const [token, setToken] = useState(null);
 
@@ -23,6 +20,7 @@ const App = () => {
   }, []);
 
     if (token === null) {
+      console.log("Hello")
     return null; // or a loader
   }
   
