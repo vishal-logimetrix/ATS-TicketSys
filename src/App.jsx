@@ -12,17 +12,17 @@ import TicketHistory from './Pages/TicketHistory';
 import { useEffect, useState } from 'react';
 
 const App = () => {
-  const [token, setToken] = useState(null);
+  // const [token, setToken] = useState(null);
 
-    useEffect(() => {
-    const savedToken = localStorage.getItem('token');
-    setToken(savedToken);
-  }, []);
+  //   useEffect(() => {
+  //   const savedToken = localStorage.getItem('token');
+  //   setToken(savedToken);
+  // }, []);
 
-    if (token === null) {
-      console.log("Hello")
-    return null; // or a loader
-  }
+  //   if (token === null) {
+  //     console.log("Hello")
+  //   return null; 
+  // }
   
   return (
     <Routes>
