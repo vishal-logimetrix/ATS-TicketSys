@@ -5,7 +5,7 @@ import NewTicket from './Pages/NewTicket';
 import Login from './Pages/Login';
 import Register from './Pages/Register';
 import Dashboard from './Pages/Dashboard';
-import "./app.css"
+import "./App.css"
 import NewUser from './Pages/NewUser';
 import TicketDetailsModal from './Pages/TicketDetails';
 import TicketHistory from './Pages/TicketHistory';
