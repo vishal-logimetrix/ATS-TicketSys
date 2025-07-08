@@ -50,7 +50,7 @@ const Login = () => {
             alt="Logo"
             style={{ width: 40, height: 40 }}
           /> */}
-          <h1>Logo</h1>
+          <h1>TicketSystem</h1>
         </Box>
 
         {/* Heading */}

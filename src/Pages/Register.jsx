@@ -44,7 +44,8 @@ const Register = () => {
       >
         {/* Logo */}
         <Box display="flex" justifyContent="center" mb={2}>
-          <img src="/logo.png" alt="Logo" style={{ width: 40, height: 40 }} />
+          {/* <img src="/logo.png" alt="Logo" style={{ width: 40, height: 40 }} /> */}
+          <h1>TicketSystem</h1>
         </Box>
 
         {/* Title */}
