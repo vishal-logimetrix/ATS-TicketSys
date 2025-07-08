@@ -9,13 +9,23 @@ import "./app.css"
 import NewUser from './Pages/NewUser';
 import TicketDetailsModal from './Pages/TicketDetails';
 import TicketHistory from './Pages/TicketHistory';
+import { useEffect, useState } from 'react';
 
 
 
 
 const App = () => {
-  const token = localStorage.getItem('token');
+  const [token, setToken] = useState(null);
 
+    useEffect(() => {
+    const savedToken = localStorage.getItem('token');
+    setToken(savedToken);
+  }, []);
+
+    if (token === null) {
+    return null; // or a loader
+  }
+  
   return (
     <Routes>
       <Route path="/" element={<Login />} />
