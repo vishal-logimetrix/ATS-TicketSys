@@ -13,6 +13,7 @@ import {
 } from '@mui/material';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { Link, useNavigate } from 'react-router-dom';
+import logo from "../assets/Img/TS-logo.png"
 
 const Login = () => {
   const navigate = useNavigate();
@@ -45,12 +46,12 @@ const Login = () => {
       >
         {/* Logo */}
         <Box display="flex" justifyContent="center" mb={2}>
-          {/* <img
-            src="/logo.png"
+          <img
+            src={logo}
             alt="Logo"
-            style={{ width: 40, height: 40 }}
-          /> */}
-          <h1>TicketSystem</h1>
+            style={{ width: 200, height: 80 }}
+          />
+          {/* <h1>TicketSystem</h1> */}
         </Box>
 
         {/* Heading */}

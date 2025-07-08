@@ -7,6 +7,7 @@ import {
   Logout as LogoutIcon,
   History as HistoryIcon,
 } from "@mui/icons-material";
+import logo from "../assets/Img/TS-logo.png"
 
 const Sidebar = ({ open }) => {
   const location = useLocation();
@@ -48,13 +49,14 @@ const Sidebar = ({ open }) => {
         <div className="d-flex flex-column h-100">
           {/* Logo Section */}
           <div className="d-flex align-items-center border-bottom px-3 py-4">
-            <div
+            {/* <div
               className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
               style={{ width: 40, height: 40 }}
             >
               T
-            </div>
-            <h5 className="mb-0 fw-bold">TicketSystem</h5>
+            </div> */}
+            {/* <h5 className="mb-0 fw-bold">TicketSystem</h5> */}
+            <img src={logo} alt="Logo" style={{ width: 200, height: 80 }} />
           </div>
 
           {/* Menu */}

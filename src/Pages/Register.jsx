@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   Button,
@@ -9,27 +9,28 @@ import {
   Paper,
   TextField,
   Typography,
-} from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { Link, useNavigate } from 'react-router-dom';
+} from "@mui/material";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { Link, useNavigate } from "react-router-dom";
+import logo from "../assets/Img/TS-logo.png"
 
 const Register = () => {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
 
   const handleRegister = () => {
-    localStorage.setItem('token', 'dummy');
-    navigate('/');
+    localStorage.setItem("token", "dummy");
+    navigate("/");
   };
 
   return (
     <Box
       sx={{
-        minHeight: '100vh',
-        backgroundColor: '#f9fafb',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        minHeight: "100vh",
+        backgroundColor: "#f9fafb",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
         px: 2,
       }}
     >
@@ -38,14 +39,14 @@ const Register = () => {
         sx={{
           p: 4,
           maxWidth: 450,
-          width: '100%',
+          width: "100%",
           borderRadius: 3,
         }}
       >
         {/* Logo */}
         <Box display="flex" justifyContent="center" mb={2}>
-          {/* <img src="/logo.png" alt="Logo" style={{ width: 40, height: 40 }} /> */}
-          <h1>TicketSystem</h1>
+          <img src={logo} alt="Logo" style={{ width: 200, height: 80 }} />
+          {/* <h1>TicketSystem</h1> */}
         </Box>
 
         {/* Title */}
@@ -83,7 +84,7 @@ const Register = () => {
         <TextField
           fullWidth
           label="Password"
-          type={showPassword ? 'text' : 'password'}
+          type={showPassword ? "text" : "password"}
           margin="normal"
           variant="outlined"
           InputProps={{
@@ -103,17 +104,17 @@ const Register = () => {
         {/* Register Button */}
         <Button
           fullWidth
-          className='btn btn-primary'
+          className="btn btn-primary"
           variant="contained"
           size="large"
           onClick={handleRegister}
           sx={{
             mt: 2,
             borderRadius: 2,
-            textTransform: 'none',
+            textTransform: "none",
             // backgroundColor: '#6d28d9',
-            '&:hover': {
-              backgroundColor: '#5b21b6',
+            "&:hover": {
+              backgroundColor: "#5b21b6",
             },
           }}
         >
@@ -127,12 +128,11 @@ const Register = () => {
         </Divider>
 
         <Typography variant="body2" align="center" mt={3}>
-          already have an account?{' '}
+          already have an account?{" "}
           <Link to="/" underline="hover" color="primary">
             Login now
           </Link>
         </Typography>
-
       </Paper>
     </Box>
   );
