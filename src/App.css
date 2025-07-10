@@ -1,7 +1,7 @@
 
 
 .active{
-    background: rgb(227 242 254) !important;
+    background: rgb(213, 232, 248) !important;
 }
 
 input:focus,
@@ -10,4 +10,8 @@ select:focus,
 button:focus {
   outline: none !important;
   box-shadow: none !important;
+}
+
+.swal2-container {
+  z-index: 2000 !important;
 }

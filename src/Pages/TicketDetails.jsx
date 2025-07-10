@@ -1,247 +1,331 @@
-import React, { useState } from "react";
-import {
-  Button,
-  Modal,
-  Box,
-  Backdrop,
-  Fade,
-  Typography,
-  Chip,
-} from "@mui/material";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
+import { getRequest, putRequest } from "../api/httpService";
+import { Modal, Box } from "@mui/material";
+import { getCurrentUser, getUserRole } from "../utils/auth";
 
 const TicketDetailsPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
+  const [ticket, setTicket] = useState(null);
+  const [priority, setPriority] = useState("3");
+  const [status, setStatus] = useState("open");
+  const [closingNote, setClosingNote] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [updating, setUpdating] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
-  const [openModal, setOpenModal] = useState(false);
-  const [priority, setPriority] = useState("1");
+  const [isEditing, setIsEditing] = useState(false);
 
-  const images = [
-    "https://static.vecteezy.com/system/resources/thumbnails/036/324/708/small/ai-generated-picture-of-a-tiger-walking-in-the-forest-photo.jpg",
-    "https://static.vecteezy.com/system/resources/thumbnails/054/628/719/small/a-tiger-running-on-rocks-in-the-wild-photo.jpg",
-  ];
+  const user = getCurrentUser()
+  const role = getUserRole() || "user";
+  const canEdit = role === "admin" || role === "superadmin";
 
-  const handleImageClick = (src) => {
-    setPreviewImage(src);
-    setOpenModal(true);
-  };
+  useEffect(() => {
+    if (!ticket || ticket._id !== id) {
+      fetchTicket();
+    }
+  }, [id]);
 
-  const handleClose = () => setOpenModal(false);
-
-  const getPriorityColor = () => {
-    switch (priority) {
-      case "1":
-        return "error";
-      case "2":
-        return "warning";
-      case "3":
-        return "success";
-      default:
-        return "default";
+  const fetchTicket = async () => {
+    try {
+      setLoading(true);
+      const ticketData = await getRequest(`/ticket/list/${id}`);
+      const normalizedTicket = {
+        ...ticketData,
+        priority: ticketData.priority?.toString() || "3",
+        status: ticketData.status || "open",
+        closingNote: ticketData.closingNote || "",
+      };
+      setTicket(normalizedTicket);
+      setPriority(normalizedTicket.priority);
+      setStatus(normalizedTicket.status);
+      setClosingNote(normalizedTicket.closingNote);
+    } catch (err) {
+      toast.error("Ticket not found");
+      navigate("/dashboard");
+    } finally {
+      setLoading(false);
     }
   };
 
+  const handleUpdate = async () => {
+    if (status === "closed" && !closingNote.trim()) {
+      toast.error("Closing note is required when closing the ticket.");
+      return;
+    }
+    if (
+      status === "closed" &&
+      !window.confirm("Are you sure you want to close this ticket?")
+    ) {
+      return;
+    }
+    try {
+      setUpdating(true);
+      await putRequest(`/ticket/${id}`, {
+        priority,
+        status,
+        closingNote: status === "closed" ? closingNote : "",
+      });
+      toast.success("Ticket updated successfully");
+      await fetchTicket();
+      setIsEditing(false);
+    } catch (err) {
+      toast.error("Failed to update ticket");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  if (!ticket) {
+    return (
+      <div className="text-center my-5">
+        <div className="spinner-border" role="status"></div>
+      </div>
+    );
+  }
+
+  const images =
+    ticket.filePaths?.map(
+      (path) =>
+        `${import.meta.env.VITE_API_BASE_URL}/${path.replace(/\\/g, "/")}`
+    ) || [];
+
   return (
-    <div className="container py-4">
-      <div className="card shadow border-0 rounded-0">
-        <div className="card-header text-dark bg-white d-flex justify-content-between align-items-center">
-          <h5 className="mb-0 fw-bold">
-            Ticket Details <span className="fw-normal">#{id}</span>
-          </h5>
-          <Button
-            variant="outlined"
-            size="small"
-            onClick={() => navigate("/dashboard")}
-          >
-            ← Back to Dashboard
-          </Button>
-        </div>
-
-        <div className="card-body">
-          {/* Ticket Info */}
-          <div className="row mb-4">
-            <div className="col-md-6 mb-3">
-              <Typography variant="subtitle2" color="textSecondary">
-                Subject
-              </Typography>
-              <Typography fontWeight={500}>Login issue on portal</Typography>
-            </div>
-            <div className="col-md-3 mb-3">
-              <Typography variant="subtitle2" color="textSecondary">
-                Assigned
-              </Typography>
-              <Typography fontWeight={500}>John Doe</Typography>
-            </div>
-            <div className="col-md-3 mb-3">
-              <Typography
-                variant="subtitle2"
-                color="textSecondary"
-                className="d-flex justify-content-between align-items-center"
-              >
-                Priority
-                {priority && (
-                  <Chip
-                    label={
-                      priority === "1"
-                        ? "Critical"
-                        : priority === "2"
-                        ? "Medium"
-                        : "Low"
-                    }
-                    color={getPriorityColor()}
-                    size="small"
-                  />
-                )}
-              </Typography>
-              <select
-                className="form-select mt-1"
-                value={priority}
-                onChange={(e) => setPriority(e.target.value)}
-              >
-                <option value="3">3 - No Business Impact (Low)</option>
-                <option value="2">2 - Limited Business Impact (Medium)</option>
-                <option value="1">
-                  1 - Critical Business Impact (Critical)
-                </option>
-              </select>
-            </div>
+    <div className="container-fluid">
+      <div className="container py-4">
+      <div className="card shadow rounded-3 p-4 border-0">
+        <div className="d-flex justify-content-between align-items-center mb-4">
+          <div>
+            <h4 className="fw-bold mb-0">Ticket #{ticket.ticketId}</h4>
+            <small className="text-muted">
+              Created on{" "}
+              {new Date(ticket.createdAt).toLocaleDateString("en-GB", {
+                day: "numeric",
+                month: "long",
+                year: "numeric",
+              })}
+            </small>
           </div>
-
-          {/* Status & Notes */}
-          <div className="row mb-4">
-            <div className="col-md-3">
-              <Typography variant="subtitle2" color="textSecondary">
-                Date
-              </Typography>
-              <Typography fontWeight={500}>2025-07-05</Typography>
-            </div>
-            <div className="col-md-4">
-              <label className="form-label text-muted">Status</label>
-              <select className="form-select" defaultValue="Open">
-                <option value="Open">Open</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Closed">Closed</option>
-              </select>
-            </div>
-            <div className="col-md-5">
-              <label className="form-label text-muted">Closing Note</label>
-              <textarea
-                className="form-control"
-                rows="2"
-                placeholder="Enter reason for closing"
-              />
-            </div>
-          </div>
-
-          {/* Uploaded Images */}
-          <div className="mb-4">
-            <Typography variant="subtitle2" color="textSecondary" gutterBottom>
-              Uploaded Images
-            </Typography>
-            <div className="d-flex flex-wrap gap-3">
-              {images.map((src, index) => (
-                <img
-                  key={index}
-                  src={src}
-                  className="img-thumbnail rounded"
-                  alt={`uploaded-${index}`}
-                  style={{
-                    width: 120,
-                    height: 120,
-                    objectFit: "cover",
-                    cursor: "pointer",
-                  }}
-                  onClick={() => handleImageClick(src)}
-                />
-              ))}
-            </div>
-          </div>
-
-          {/* Action Buttons */}
-          <div className="d-flex justify-content-end">
-            <Button
-              className="me-2"
-              variant="outlined"
-              size="small"
+          <div>
+            <button
+              className="btn btn-outline-secondary me-2"
               onClick={() => navigate("/dashboard")}
             >
-              Cancel
-            </Button>
-            <Button variant="contained" size="small">
-              Update
-            </Button>
+              Back
+            </button>
+            {canEdit && !isEditing && ticket.status !== "closed" && (
+              <button
+                className="btn btn-primary"
+                onClick={() => setIsEditing(true)}
+              >
+                Edit
+              </button>
+            )}
           </div>
+        </div>
+        <hr />
+        <div className="row g-3">
+          <div className="col-md-4">
+            <label className="form-label">Issue Reported</label>
+            <input
+              type="text"
+              className="form-control"
+              value={ticket.issueReported}
+              disabled
+            />
+          </div>
+          <div className="col-md-4">
+            <label className="form-label">Serial Number</label>
+            <input
+              type="text"
+              className="form-control"
+              value={ticket.serialNumber}
+              disabled
+            />
+          </div>
+          <div className="col-md-4">
+            <label className="form-label">Location</label>
+            <input
+              type="text"
+              className="form-control"
+              value={ticket.productLocation}
+              disabled
+            />
+          </div>
+
+          <div className="col-md-4">
+            <label className="form-label">Priority</label>
+            <select
+              className="form-select"
+              value={priority}
+              onChange={(e) => setPriority(e.target.value)}
+              disabled={!isEditing || ticket.status === "closed"}
+            >
+              <option value="3">3 - Low</option>
+              <option value="2">2 - Medium</option>
+              <option value="1">1 - Critical</option>
+            </select>
+          </div>
+          <div className="col-md-4">
+            <label className="form-label">Status</label>
+            <select
+              className="form-select"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              disabled={!isEditing || ticket.status === "closed"}
+            >
+              <option value="open">Open</option>
+              <option value="in_progress">In Progress</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+          {status === "closed" && (
+            <div className="col-12">
+              <label className="form-label">Closing Note</label>
+              <textarea
+                className="form-control"
+                value={closingNote}
+                onChange={(e) => setClosingNote(e.target.value)}
+                disabled={!isEditing}
+                rows={2}
+              />
+            </div>
+          )}
+
+          <div className="col-12">
+            <label className="form-label">Additional Info</label>
+            <textarea
+              className="form-control"
+              value={ticket.additionalInfo || "N/A"}
+              disabled
+              rows={4}
+              style={{ resize: "vertical" }}
+            />
+          </div>
+
+          <div className="col-12">
+            <label className="form-label">Description</label>
+            <textarea
+              className="form-control"
+              value={ticket.description || ""}
+              disabled
+              rows={4}
+              style={{ resize: "vertical" }}
+            />
+          </div>
+
+          {isEditing && (
+            <div className="col-12 d-flex justify-content-end">
+              <button
+                className="btn btn-outline-secondary me-2"
+                onClick={() => setIsEditing(false)}
+                disabled={updating}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn btn-success"
+                onClick={handleUpdate}
+                disabled={updating}
+              >
+                {updating ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-5">
+          <h6 className="fw-bold">Contact Info</h6>
+          <p>
+            <strong>Name:</strong> {ticket.contact?.name || "N/A"}
+          </p>
+          <p>
+            <strong>Phone:</strong> {ticket.contact?.phone || "N/A"}
+          </p>
+          <p>
+            <strong>Email:</strong> {ticket.contact?.email || "N/A"}
+          </p>
+        </div>
+
+        <div className="mt-4">
+          <h6 className="fw-bold">Uploaded Images</h6>
+          {images.length > 0 ? (
+            <div className="row g-3">
+              {images.map((src, idx) => (
+                <div className="col-4 col-md-3 col-lg-2" key={idx}>
+                  <img
+                    src={src}
+                    alt={`uploaded-${idx}`}
+                    className="rounded shadow-sm"
+                    style={{
+                      width: "100%",
+                      height: "120px",
+                      objectFit: "cover",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => setPreviewImage(src)}
+                  />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted fst-italic">No images uploaded.</p>
+          )}
         </div>
       </div>
 
-      {/* Image Modal Preview */}
-      <Modal
-        open={openModal}
-        onClose={handleClose}
-        closeAfterTransition
-        slots={{ backdrop: Backdrop }}
-        slotProps={{ backdrop: { timeout: 300 } }}
-      >
-        <Fade in={openModal}>
-          <Box
-            sx={{
+      {/* MUI Image Preview Modal */}
+      <Modal open={!!previewImage} onClose={() => setPreviewImage(null)}>
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            bgcolor: "background.paper",
+            borderRadius: 2,
+            boxShadow: 24,
+            p: 0,
+            width: "60vw",
+            height: "70vh",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <button
+            onClick={() => setPreviewImage(null)}
+            style={{
               position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              outline: "none",
-              bgcolor: "transparent",
-              p: 0,
+              top: 8,
+              right: 8,
+              border: "none",
+              background: "transparent",
+              fontSize: "1.5rem",
+              fontWeight: "bold",
+              cursor: "pointer",
+              lineHeight: "1",
+              zIndex: 1,
             }}
+            aria-label="Close"
           >
-            <Box
-              sx={{
-                position: "relative",
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-              }}
-            >
-              <Button
-                onClick={handleClose}
-                sx={{
-                  position: "absolute",
-                  top: 8,
-                  right: 8,
-                  zIndex: 2,
-                  minWidth: "unset",
-                  width: 36,
-                  height: 36,
-                  bgcolor: "#000",
-                  color: "#fff",
-                  fontWeight: "bold",
-                  fontSize: "1.2rem",
-                  borderRadius: "50%",
-                  "&:hover": {
-                    bgcolor: "#333",
-                  },
-                }}
-              >
-                &times;
-              </Button>
-
-              <img
-                src={previewImage}
-                alt="Preview"
-                style={{
-                  maxHeight: "80vh",
-                  maxWidth: "90vw",
-                  objectFit: "contain",
-                  borderRadius: "8px",
-                  boxShadow: "0 0 20px rgba(0,0,0,0.5)",
-                  zIndex: 1,
-                }}
-              />
-            </Box>
-          </Box>
-        </Fade>
+            ×
+          </button>
+          <img
+            src={previewImage}
+            alt="Preview"
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "contain",
+              borderRadius: "8px",
+            }}
+          />
+        </Box>
       </Modal>
+    </div>
     </div>
   );
 };

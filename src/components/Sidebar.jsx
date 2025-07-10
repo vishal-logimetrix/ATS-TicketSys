@@ -1,5 +1,5 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Dashboard as DashboardIcon,
   AddCircleOutline as AddIcon,
@@ -7,33 +7,47 @@ import {
   Logout as LogoutIcon,
   History as HistoryIcon,
 } from "@mui/icons-material";
-import logo from "../assets/Img/TS-logo.png"
+import logo from "../assets/Img/TS-logo.png";
+import { getCurrentUser, getUserRole } from "../utils/auth";
 
 const Sidebar = ({ open }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  // Get role from localStorage
+  const user = getCurrentUser()
+  const role = getUserRole() || "user";
 
   const menuItems = [
     {
       text: "Dashboard",
       icon: <DashboardIcon className="me-2" />,
       path: "/dashboard",
+      roles: ["admin", "superadmin", "user"],
     },
     {
       text: "New Ticket",
       icon: <AddIcon className="me-2" />,
       path: "/dashboard/tickets",
+      roles: ["admin", "superadmin"],
     },
     {
       text: "New User",
       icon: <UserAddIcon className="me-2" />,
       path: "/dashboard/new-user",
+      roles: ["admin", "superadmin"],
     },
     {
       text: "Ticket History",
       icon: <HistoryIcon className="me-2" />,
       path: "/dashboard/history",
+      roles: ["admin", "superadmin", "user"],
     },
   ];
+
+  const handleLogout = () => {
+    localStorage.clear(); // Clear all user data
+    navigate("/"); // Navigate to login or home page
+  };
 
   return (
     <div
@@ -49,49 +63,44 @@ const Sidebar = ({ open }) => {
         <div className="d-flex flex-column h-100">
           {/* Logo Section */}
           <div className="d-flex align-items-center border-bottom px-3 py-4">
-            {/* <div
-              className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-2"
-              style={{ width: 40, height: 40 }}
-            >
-              T
-            </div> */}
-            {/* <h5 className="mb-0 fw-bold">TicketSystem</h5> */}
-            <img src={logo} alt="Logo" style={{ width: 200, height: 80 }} />
+            <img src={logo} alt="Logo" style={{ width: 160, height: 60 }} />
           </div>
 
           {/* Menu */}
           <div className="flex-grow-1 px-3 py-2">
             <ul className="list-unstyled mb-2">
-              {menuItems.map((item) => (
-                <li key={item.text} className="mb-1 p-1">
-                  <Link
-                    to={item.path}
-                    className={`d-flex align-items-center p-3 rounded text-decoration-none ${
-                      location.pathname === item.path
-                        ? "active fw-semibold"
-                        : "text-dark"
-                    }`}
-                    style={{
-                      transition: "all 0.2s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (location.pathname !== item.path) {
-                        e.currentTarget.style.backgroundColor = "#f8f9fa";
-                        e.currentTarget.style.paddingLeft = "1.25rem";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (location.pathname !== item.path) {
-                        e.currentTarget.style.backgroundColor = "transparent";
-                        e.currentTarget.style.paddingLeft = "1rem";
-                      }
-                    }}
-                  >
-                    {item.icon}
-                    {item.text}
-                  </Link>
-                </li>
-              ))}
+              {menuItems
+                .filter((item) => item.roles.includes(role))
+                .map((item) => (
+                  <li key={item.text} className="mb-1 p-1">
+                    <Link
+                      to={item.path}
+                      className={`d-flex align-items-center p-3 rounded text-decoration-none ${
+                        location.pathname === item.path
+                          ? "active fw-semibold text-dark"
+                          : "text-dark"
+                      }`}
+                      style={{
+                        transition: "all 0.2s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (location.pathname !== item.path) {
+                          e.currentTarget.style.backgroundColor = "#f8f9fa";
+                          e.currentTarget.style.paddingLeft = "1.25rem";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (location.pathname !== item.path) {
+                          e.currentTarget.style.backgroundColor = "transparent";
+                          e.currentTarget.style.paddingLeft = "1rem";
+                        }
+                      }}
+                    >
+                      {item.icon}
+                      {item.text}
+                    </Link>
+                  </li>
+                ))}
             </ul>
 
             <hr />
@@ -99,10 +108,11 @@ const Sidebar = ({ open }) => {
             {/* Logout */}
             <ul className="list-unstyled">
               <li>
-                <Link
-                  to="/"
+                <div
+                  onClick={handleLogout}
                   className="d-flex align-items-center p-3 rounded text-danger text-decoration-none"
                   style={{
+                    cursor: "pointer",
                     transition: "background-color 0.2s",
                   }}
                   onMouseEnter={(e) =>
@@ -114,7 +124,7 @@ const Sidebar = ({ open }) => {
                 >
                   <LogoutIcon className="me-2" />
                   Logout
-                </Link>
+                </div>
               </li>
             </ul>
           </div>
@@ -125,11 +135,11 @@ const Sidebar = ({ open }) => {
               className="bg-secondary text-white rounded-circle d-flex align-items-center justify-content-center me-2"
               style={{ width: 40, height: 40 }}
             >
-              A
+              {user?.fullname?.charAt(0).toUpperCase() || "U"}
             </div>
             <div>
-              <div className="fw-semibold">Admin User</div>
-              <small className="text-muted">Administrator</small>
+              <div className="fw-semibold">{user?.fullname || "User"}</div>
+              <small className="text-muted">{role}</small>
             </div>
           </div>
         </div>

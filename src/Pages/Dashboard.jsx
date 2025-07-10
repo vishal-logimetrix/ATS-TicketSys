@@ -1,120 +1,246 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   AssignmentInd,
   TaskAlt,
   PendingActions,
   WarningAmber,
 } from "@mui/icons-material";
-import { Button, Typography } from "@mui/material";
+import { Box, Button, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
+import { getRequest } from "../api/httpService";
+import { toast } from "react-toastify";
 
-const tickets = [
-  {
-    id: "TCK-001",
-    subject: "Login issue on portal Login issue on portal Login issue on portalLogin issue on portalLogin issue on portal",
-    status: "Open",
-    priority: "High",
-    date: "2025-07-05",
-    assigned: "John Doe",
-  },
-  {
-    id: "TCK-002",
-    subject: "Payment gateway error",
-    status: "In Progress",
-    priority: "Medium",
-    date: "2025-07-04",
-    assigned: "Jane Smith",
-  },
-  {
-    id: "TCK-003",
-    subject: "UI bug in mobile view",
-    status: "Closed",
-    priority: "Low",
-    date: "2025-07-01",
-    assigned: "Mike Johnson",
-  },
-  {
-    id: "TCK-004",
-    subject: "Unable to reset password",
-    status: "Closed",
-    priority: "Medium",
-    date: "2025-07-01",
-    assigned: "Sarah Williams",
-  },
-];
-
-
+const getGreeting = () => {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good Morning";
+  if (hour < 17) return "Good Afternoon";
+  return "Good Evening";
+};
 
 const Dashboard = () => {
+  const navigate = useNavigate();
+  const [tickets, setTickets] = useState([]);
+  const [totalCounts, setTotalCounts] = useState({
+    totalTickets: 0,
+    totalOpen: 0,
+    totalClosed: 0,
+    totalInprogress: 0,
+  });
 
-  const navigate = useNavigate()
-  const total = tickets.length;
-  const solved = tickets.filter((t) => t.status === "Closed").length;
-  const open = tickets.filter((t) => t.status === "Open").length;
-  const progress = tickets.filter((t) => t.status === "In Progress").length;
+  const user = JSON.parse(localStorage.getItem("user"));
+  const greeting = `${getGreeting()}`;
+
+  useEffect(() => {
+    fetchTickets();
+  }, []);
+
+  const fetchTickets = async () => {
+    try {
+      const data = await getRequest("/ticket/list");
+      console.log(data);
+      const sorted = [...data.tickets]
+        .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        .slice(0, 5); // only recent 5
+      setTickets(sorted);
+      setTotalCounts({
+        totalTickets: data.totalTickets,
+        totalOpen: data.totalOpen,
+        totalClosed: data.totalClosed,
+        totalInprogress: data.totalInprogress,
+      });
+    } catch (err) {
+      toast.error("Failed to load ticket history");
+    }
+  };
+
+  const { totalTickets, totalOpen, totalClosed, totalInprogress } = totalCounts;
 
   return (
     <div className="container-fluid">
-      <Typography variant="h5" fontWeight={700} mb={3}>Dasboard Managment</Typography>
+      <Box
+        className="ps-3 mb-4"
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+          backgroundColor: "#E3F2FD", 
+          borderRadius: 1,
+          px: 2,
+          py: 1.5,
+          boxShadow: "0 1px 4px rgba(0, 0, 0, 0.05)",
+          fontSize: { xs: "1.1rem", md: "1.25rem" },
+          fontWeight: 600,
+          color: "#0D47A1",
+        }}
+      >
+        {greeting} <span className="text-danger text-capitalize fs-5">{ user?.fullname?.split(" ")[0] || "User" } 👋</span>
+      </Box>
+      <Typography variant="h5" fontWeight={700} mb={3}>
+        Dashboard Management
+      </Typography>
       <hr />
+
       {/* Cards Row */}
-      <div className="row g-3 mb-4">
+      <div className="row g-4 mb-4">
+        {/* Total Tickets */}
         <div className="col-sm-6 col-md-3">
-          <div className="card shadow h-100 border-0 p-3" style={{background: '#e3f2fd'}}>
-            <div className="card-body d-flex align-items-center">
-              <AssignmentInd className="text-primary me-3" fontSize="large" />
+          <div
+            className="card shadow-sm border-0 h-100 rounded-1"
+            style={{
+              background: "linear-gradient(135deg, #e3f2fd, #bbdefb)",
+              borderRadius: "1rem",
+              transition: "transform 0.2s ease, box-shadow 0.2s ease",
+              cursor: "pointer",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-4px)";
+              e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.1)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "none";
+              e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.05)";
+            }}
+          >
+            <div className="card-body d-flex align-items-center gap-3 p-4">
+              <div
+                className="bg-white shadow-sm rounded-circle d-flex align-items-center justify-content-center"
+                style={{
+                  width: 60,
+                  height: 60,
+                  color: "var(--bs-primary)",
+                }}
+              >
+                <AssignmentInd fontSize="large" />
+              </div>
               <div>
-                <p className="text-muted mb-1">Total Tickets</p>
-                <h5 className="fw-semibold mb-0 text-primary">{total}</h5>
+                <p className="text-muted mb-2 fw-semibold small">
+                  Total Tickets
+                </p>
+                <h5 className="fw-bold text-primary mb-0">{totalTickets}</h5>
               </div>
             </div>
           </div>
         </div>
 
+        {/* Resolved */}
         <div className="col-sm-6 col-md-3">
-          <div className="card shadow h-100 border-0 p-3" style={{background: '#e8f5e9'}}>
-            <div className="card-body d-flex align-items-center">
-              <TaskAlt className="text-success me-3" fontSize="large" />
+          <div
+            className="card shadow-sm border-0 h-100 rounded-1"
+            style={{
+              background: "linear-gradient(135deg, #e8f5e9, #c8e6c9)",
+              borderRadius: "1rem",
+              transition: "transform 0.2s ease, box-shadow 0.2s ease",
+              cursor: "pointer",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-4px)";
+              e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.1)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "none";
+              e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.05)";
+            }}
+          >
+            <div className="card-body d-flex align-items-center gap-3 p-4">
+              <div
+                className="bg-white shadow-sm rounded-circle d-flex align-items-center justify-content-center"
+                style={{
+                  width: 60,
+                  height: 60,
+                  color: "var(--bs-success)",
+                }}
+              >
+                <TaskAlt fontSize="large" />
+              </div>
               <div>
-                <p className="text-muted mb-1">Resolved</p>
-                <h5 className="fw-semibold mb-0 text-success">{solved}</h5>
+                <p className="text-muted mb-2 fw-semibold small">Resolved</p>
+                <h5 className="fw-bold text-success mb-0">{totalClosed}</h5>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="col-sm-6 col-md-3" >
-          <div className="card shadow h-100 border-0 p-3" style={{background: '#fff8e1'}}>
-            <div className="card-body d-flex align-items-center">
-              <PendingActions className="text-warning me-3" fontSize="large" />
+        {/* In Progress */}
+        <div className="col-sm-6 col-md-3">
+          <div
+            className="card shadow-sm border-0 h-100 rounded-1"
+            style={{
+              background: "linear-gradient(135deg, #fffde7, #fff8e1)",
+              borderRadius: "1rem",
+              transition: "transform 0.2s ease, box-shadow 0.2s ease",
+              cursor: "pointer",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-4px)";
+              e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.1)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "none";
+              e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.05)";
+            }}
+          >
+            <div className="card-body d-flex align-items-center gap-3 p-4">
+              <div
+                className="bg-white shadow-sm rounded-circle d-flex align-items-center justify-content-center"
+                style={{
+                  width: 60,
+                  height: 60,
+                  color: "var(--bs-warning)",
+                }}
+              >
+                <PendingActions fontSize="large" />
+              </div>
               <div>
-                <p className="text-muted mb-1">In Progress</p>
-                <h5 className="fw-semibold mb-0 text-warning">{progress}</h5>
+                <p className="text-muted mb-2 fw-semibold small">In Progress</p>
+                <h5 className="fw-bold text-warning mb-0">{totalInprogress}</h5>
               </div>
             </div>
           </div>
         </div>
 
+        {/* Open */}
         <div className="col-sm-6 col-md-3">
-          <div className="card shadow h-100 border-0 p-3" style={{background: '#ffebee'}}>
-            <div className="card-body d-flex align-items-center">
-              <WarningAmber className="text-danger me-3" fontSize="large" />
+          <div
+            className="card shadow-sm border-0 h-100 rounded-1"
+            style={{
+              background: "linear-gradient(135deg, #ffebee, #ffcdd2)",
+              borderRadius: "1rem",
+              transition: "transform 0.2s ease, box-shadow 0.2s ease",
+              cursor: "pointer",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "translateY(-4px)";
+              e.currentTarget.style.boxShadow = "0 8px 20px rgba(0,0,0,0.1)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "none";
+              e.currentTarget.style.boxShadow = "0 2px 10px rgba(0,0,0,0.05)";
+            }}
+          >
+            <div className="card-body d-flex align-items-center gap-3 p-4">
+              <div
+                className="bg-white shadow-sm rounded-circle d-flex align-items-center justify-content-center"
+                style={{
+                  width: 60,
+                  height: 60,
+                  color: "var(--bs-danger)",
+                }}
+              >
+                <WarningAmber fontSize="large" />
+              </div>
               <div>
-                <p className="text-muted mb-1">Reject</p>
-                <h5 className="fw-semibold mb-0 text-danger">{open}</h5>
+                <p className="text-muted mb-2 fw-semibold small">Open</p>
+                <h5 className="fw-bold text-danger mb-0">{totalOpen}</h5>
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Responsive Ticket Table */}
+      {/* Ticket Table */}
       <div className="card shadow border rounded-0">
         <div className="card-header d-flex justify-content-between align-items-center p-3">
           <h6 className="mb-0">Recent Tickets</h6>
-          {/* <Button variant="outlined" size="small" sx={{ textTransform: "none" }}>
-            View All
-          </Button> */}
         </div>
         <div className="card-body p-0">
           <div className="table-responsive">
@@ -125,33 +251,88 @@ const Dashboard = () => {
                   <th>Subject</th>
                   <th>Status</th>
                   <th>Priority</th>
-                  <th>Date</th>
+                  <th>Create Date</th>
+                  <th>Update Date</th>
                   <th>Assigned To</th>
                   <th className="text-end px-5">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {tickets.map((ticket) => (
-                  <tr key={ticket.id}>
-                    <td className="px-3">{ticket.id}</td>
-                    <td className="text-truncate" style={{ maxWidth: "250px" }} title={ticket.subject}>
-                      {ticket.subject}
+                  <tr key={ticket._id}>
+                    <td className="px-3">{ticket.ticketId}</td>
+                    <td
+                      className="text-truncate"
+                      style={{ maxWidth: "250px" }}
+                      title={ticket.issueReported}
+                    >
+                      {ticket.issueReported}
                     </td>
                     <td>
-                      {ticket.status}
+                      <span
+                        className={`badge bg-${
+                          ticket.status === "closed"
+                            ? "success"
+                            : ticket.status === "in_progress"
+                            ? "warning text-dark"
+                            : "danger"
+                        }`}
+                      >
+                        {ticket.status.replace("_", " ")}
+                      </span>
                     </td>
                     <td>
-                      {ticket.priority}
+                      <span
+                        className={`badge bg-${
+                          ticket.priority === "1"
+                            ? "danger"
+                            : ticket.priority === "2"
+                            ? "warning text-dark"
+                            : "secondary"
+                        }`}
+                      >
+                        {ticket.priority === "1"
+                          ? "High"
+                          : ticket.priority === "2"
+                          ? "Medium"
+                          : "Low"}
+                      </span>
                     </td>
-                    <td>{ticket.date}</td>
-                    <td>{ticket.assigned}</td>
+                    <td>
+                      {new Date(ticket.createdAt).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </td>
+                    <td>
+                      {new Date(ticket.updatedAt).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </td>
+                    <td>{ticket.contact?.name || "Unassigned"}</td>
                     <td className="text-end px-5">
-                      <Button variant="contained" size="small" onClick={() => navigate(`/dashboard/ticket/${ticket.id}`)} >
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={() =>
+                          navigate(`/dashboard/ticket/${ticket._id}`)
+                        }
+                      >
                         View
                       </Button>
                     </td>
                   </tr>
                 ))}
+                {tickets.length === 0 && (
+                  <tr>
+                    <td colSpan="7" className="text-center py-4 text-muted">
+                      No tickets found.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           </div>

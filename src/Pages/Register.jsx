@@ -27,7 +27,8 @@ const Register = () => {
     <Box
       sx={{
         minHeight: "100vh",
-        backgroundColor: "#f9fafb",
+        // backgroundColor: "#f9fafb",
+        background: 'linear-gradient(135deg, #d0e8ff, #ffffff)',
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -42,6 +43,7 @@ const Register = () => {
           width: "100%",
           borderRadius: 3,
         }}
+        className="border-0 shadow"
       >
         {/* Logo */}
         <Box display="flex" justifyContent="center" mb={2}>
